@@ -1,20 +1,18 @@
 package com.huffman;
 
-import java.util.Comparator;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.LinkedList;
+import java.util.*;
 
 public class HuffmanTree {
     // Private
     private Node root;
     private Map<Character, String> table;
     private int weight;
+    private int height;
 
     private void buildTable() { // Build table method
         table = new HashMap<>();
         weight = 0;
+        height = 0;
         if (root != null) {
             addToTable(root, "");
         }
@@ -27,6 +25,9 @@ public class HuffmanTree {
         if (node.isLeaf()) {
             table.put(node.getKey(), path);
             weight += node.getValue() * path.length(); // Increase weight
+            if (path.length() > height) { // Update tree height
+                height = path.length();
+            }
         }
         if (node.hasRight()) {
             addToTable(node.getRight(), path + "1");
@@ -39,12 +40,16 @@ public class HuffmanTree {
     }
 
     // Getters
+    public Map<Character, String> getTable() {
+        return table;
+    }
+
     public int getWeight() {
         return weight;
     }
 
-    public Map getTable() {
-        return table;
+    public int getHeight() {
+        return height;
     }
 
     // Methods
@@ -124,5 +129,58 @@ public class HuffmanTree {
             str += infix(node.getRight(), path + "1");
         }
         return str;
+    }
+
+    public String serialize() {
+        String[] arr = new String[table.size()];
+        int index = 0;
+
+        for (Map.Entry<Character, String> item : table.entrySet()) {
+            Character ch = item.getKey();
+            String path = item.getValue();
+            Node curr = root;
+            for (int i = 0; i < path.length(); i++) {
+                if (path.charAt(i) == '0') {
+                    curr = curr.getLeft();
+                } else {
+                    curr = curr.getRight();
+                }
+            }
+            Integer frequency = curr.isLeaf() ? curr.getValue() : null;
+            arr[index++] = String.join(",", (new String[] {ch.toString(), path, frequency.toString()}));
+        }
+
+        return String.join(";", arr);
+    }
+
+    public void deserialize(String str) {
+        String[] serialized = str.split(";"); // Serialize array
+        root = null;
+        if (serialized.length > 0) { // Initialize root node
+            int frequency = 0;
+            for (String item : serialized) {
+                frequency += Integer.parseInt(item.split(",")[2]);
+            }
+            root = new Node(frequency);
+        }
+        for (String item : serialized) {
+            String[] arr = item.split(",");
+            Character ch = arr[0].charAt(0);
+            String path = arr[1];
+            Integer frequency = Integer.parseInt(arr[2]);
+            Node curr = root;
+            for (int i = 0; i < path.length(); i++) {
+                if (path.charAt(i) == '0') { // Left child
+                    Node curr_ = curr;
+                    curr = curr.hasLeft() ? curr.getLeft() : i == path.length() - 1 ? new Node(ch, frequency) : new Node(0);
+                    curr_.setLeft(curr);
+                } else { // Right child
+                    Node curr_ = curr;
+                    curr = curr.hasRight() ? curr.getRight() : i == path.length() - 1 ? new Node(ch, frequency) : new Node(0);
+                    curr_.setRight(curr);
+                }
+            }
+        }
+        buildTable();
     }
 }
