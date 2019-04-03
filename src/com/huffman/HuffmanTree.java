@@ -35,6 +35,8 @@ public class HuffmanTree {
     }
 
     // Public
+    public HuffmanTree() {}
+
     public HuffmanTree(String str) {
         build(str);
     }
@@ -132,6 +134,10 @@ public class HuffmanTree {
     }
 
     public String serialize() {
+        if (table == null) {
+            return null;
+        }
+
         String[] arr = new String[table.size()];
         int index = 0;
 
